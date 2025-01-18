@@ -2,7 +2,6 @@
 # !pip install pydub sentencepiece
 # !pip install git+https://github.com/facebookresearch/seamless_communication.git
 # !pip install zhconv
-
 import numpy
 import torchaudio
 import torch
@@ -47,52 +46,13 @@ class Seamless_model():
         )
         return zhconv.convert(str(text_output[0]), "zh-tw")
 
-model_name = "seamlessM4T_v2_large"
-vocoder_name = "vocoder_v2" if model_name == "seamlessM4T_v2_large" else "vocoder_36langs"
-translator = Translator(model_name, vocoder_name, device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"), dtype=torch.float16)
-
-model_name = "seamlessM4T_v2_large"
-vocoder_name = "vocoder_v2" if model_name == "seamlessM4T_v2_large" else "vocoder_36langs"
-
-translator = Translator(
-    model_name,
-    vocoder_name,
-    device=torch.device("cuda:0"),
-    dtype=torch.float16,
-)
-
-def text2text(text):
-    text_output, _ = translator.predict(  # supported language = ("spa", "fra", "deu", "ita", "hin", "cmn")
-        input = text,
-        task_str="t2tt",
-        src_lang="eng",
-        tgt_lang="cmn"
-        )
-    return zhconv.convert(str(text_output[0]), "zh-tw")
-
-test = text2text("Hello, welcome to Taiwan")
+translator = Seamless_model()
+test = translator.text2text("Hello, welcome to Taiwan")
 print(test)
 
-def text2audio(text):
-    _, speech_output = translator.predict(
-        input = text,
-        task_str="t2st",
-        tgt_lang="cmn",
-        src_lang="cmn",
-    )
-    return speech_output
-
-sound_test = text2audio("你好，很高興認識你")
+sound_test = translator.text2audio("你好，很高興認識你")
 audio_play = Audio(sound_test.audio_wavs[0][0].to(torch.float32).cpu(), rate = sound_test.sample_rate, autoplay=False, normalize=True)
 display(audio_play)
 
-def audio2text(audio):
-    text_output, _= translator.predict(
-    input=audio,
-    task_str="s2tt",
-    tgt_lang="cmn",
-    )
-    return zhconv.convert(str(text_output[0]), "zh-tw")
-
-audio2text_test = audio2text(sound_test.audio_wavs[0][0])
+audio2text_test = translator.audio2text(sound_test.audio_wavs[0][0])
 print(audio2text_test)
